@@ -1,13 +1,13 @@
-MCAND_HI	EQU	0x00	; high byte of multiplicand (top nibble=0000)
-MCAND_LO	EQU	0x01	; low byte of multiplicand 
+
+MCAND_HI	EQU	0x0F	; high byte of multiplicand (top nibble=0000)
+MCAND_LO	EQU	0xFF	; low byte of multiplicand 
 
 BCAND_HI	EQU	R5	; the mcand must be shifted left four bits for
 BCAND_LO	EQU	R4	; booths alg. The code does this automatically
 				; and stores the result here
 
-MLIER_HI	EQU	0x00	; high byte of multiplier (top nibble=0000)
-MLIER_LO	EQU	0x83	; low byte of multiplier
-MLIER_SIZE	EQU	8	; size of multiplier in bits
+MLIER_HI	EQU	0x0F	; high byte of multiplier (top nibble=0000)
+MLIER_LO	EQU	0xFF	; low byte of multiplier
 
 ; Because we're multiplying two 12-bit numbers, the product will fit in a 24-bit
 ; (3 byte) sum
@@ -19,7 +19,6 @@ PR_LO		EQU	B	; low byte of product storage location
 
 
 ; 1-BIT BOOTH'S ALGORITHM
-
 BOOTHS:
 	MOV	R7,	#0x04		; We need to shift mcand left four bits
 	MOV	BCAND_LO,	#MCAND_LO	; load mcand into shifted spots
@@ -33,12 +32,11 @@ SHIFT:
 	RLC	A			; rotate left
 	MOV	BCAND_HI,	A	; put high byte back
 	DJNZ	R7,	SHIFT		; keep shifting until zero
-	MOV	R7,	#0x04		; the final answer needs to be shifted
 					; over four bits; this is its counter
 	MOV	PR_HI, 	#0		; clear high byte of output
 	MOV	PR_MID,	#MLIER_HI	; move multiplier into low 12b
 	MOV	PR_LO, 	#MLIER_LO
-	MOV	R0,	#MLIER_SIZE	; number of bits the algorithm must run
+	MOV	R0,	#12		; this works for up to 12 bits
 B_LOOP:
 	JNB	PR_LO.0,	B_NOADD		; skip adding if zero
 
@@ -61,11 +59,7 @@ B_NOCLR:
 	MOV	A,	PR_LO		; load in low byte
 	RRC	A			; shift low byte right
 	MOV	PR_LO,	A		; put it in product register
-	MOV	A,	R0	
-	JZ	FIN	
 	DJNZ	R0,	B_LOOP		; keep looping for every bit in mlier
-FIN:	
-	DJNZ	R7,	B_NOADD		; shift final product fourn times
-END
+	END
 ; 2-BIT BOOTH'S ALGORITHM
 
